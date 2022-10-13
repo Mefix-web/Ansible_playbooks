@@ -1,0 +1,128 @@
+- hosts: Host_A
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Pause before solr start
+      pause:
+        minutes: 1	
+		
+    - name: Start solr service
+      shell: /etc/init.d/solr start
+	  
+    - name: Check solr status
+      shell: /etc/init.d/solr status
+      ignore_errors: yes
+      register: solr_status_1
+	  
+    - debug:
+        var: solr_status_1
+		
+    - name: Pause - please verify from debug message if solr service is running
+      pause:
+	
+- hosts: Host_B
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Pause before solr start
+      pause:
+        minutes: 1	
+		
+    - name: Start solr service
+      shell: /etc/init.d/solr start
+	  
+    - name: Check solr status
+      shell: /etc/init.d/solr status
+      ignore_errors: yes
+      register: solr_status_2
+	  
+    - debug:
+        var: solr_status_2
+		
+    - name: Pause - please verify from debug message if solr service is running
+      pause:
+	
+- hosts: Host_C
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Pause before solr start
+      pause:
+        minutes: 1	
+		
+    - name: Start solr service
+      shell: /etc/init.d/solr start
+	  
+    - name: Check solr status
+      shell: /etc/init.d/solr status
+      ignore_errors: yes
+      register: solr_status_3
+	  
+    - debug:
+        var: solr_status_3
+		
+    - name: Pause - please verify from debug message if solr service is running
+      pause:

@@ -1,0 +1,215 @@
+- name: Patching HAProxy server Host_A_HAProxy
+  hosts: Host_A_HAProxy
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache on Host_A_HAProxy
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on Host_A_HAProxy
+      apt: upgrade=dist force_apt_get=yes dpkg_options='force-confold,force-confdef'
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoremove: yes
+
+    - name: Reboot Host_A_HAProxy if kernel updated
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+
+    - name: Pause to let services connect back
+      pause:
+        minutes: 1
+        
+    - name: Check status of the haproxy service
+      systemd:
+        state: started
+        name: haproxy
+      register: haproxyp01
+      failed_when: haproxyp01.status.ActiveState != 'active'
+      
+    - name: Check status of the keepalived service
+      systemd:
+        state: started
+        name: keepalived
+      register: keepalived01
+      failed_when: keepalived01.status.ActiveState != 'active'        
+
+- name: Patching HAProxy server Host_B_HAProxy
+  hosts: Host_B_HAProxy
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache on Host_B_HAProxy
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on Host_B_HAProxy
+      apt: upgrade=dist force_apt_get=yes dpkg_options='force-confold,force-confdef'
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoremove: yes
+
+    - name: Reboot Host_B_HAProxy if kernel updated
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+ 
+    - name: Pause to let services connect back
+      pause:
+        minutes: 1
+ 
+    - name: Check status of the haproxy service
+      systemd:
+        state: started
+        name: haproxy
+      register: haproxyp02
+      failed_when: haproxyp02.status.ActiveState != 'active'
+      
+    - name: Check status of the keepalived service
+      systemd:
+        state: started
+        name: keepalived
+      register: keepalived02
+      failed_when: keepalived02.status.ActiveState != 'active'        
+
+- name: Patching MariaDB server Host_C_DB
+  hosts: Host_C_DB
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache on Host_C_DB
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on Host_C_DB
+      apt: upgrade=dist force_apt_get=yes dpkg_options='force-confold,force-confdef'
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoremove: yes
+
+    - name: Reboot Host_C_DB if kernel updated
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+        
+    - name: Pause to let database connect back to cluster
+      pause:
+        minutes: 3
+        
+    - name: Check status of the mariadb service
+      systemd:
+        state: started
+        name: mariadb
+      register: mariadbp01
+      failed_when: mariadbp01.status.ActiveState != 'active'        
+
+    - name: Check Mysql
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_local_state'"
+      register: mysql01
+
+    - name: Print value
+      debug:
+        var: mysql01
+      failed_when: mysql01.stdout != 'Variable_name\tValue\nwsrep_local_state\t4'
+
+- name: Patching MariaDB server Host_D_DB
+  hosts: Host_D_DB
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache on Host_D_DB
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on Host_D_DB
+      apt: upgrade=dist force_apt_get=yes dpkg_options='force-confold,force-confdef'
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoremove: yes
+
+    - name: Reboot Host_D_DB if kernel updated
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+        
+    - name: Pause to let database connect back to cluster
+      pause:
+        minutes: 3
+        
+    - name: Check status of the mariadb service
+      systemd:
+        state: started
+        name: mariadb
+      register: mariadbp02
+      failed_when: mariadbp02.status.ActiveState != 'active'        
+
+    - name: Check Mysql
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_local_state'"
+      register: mysql02
+
+    - name: Print value
+      debug:
+        var: mysql02
+      failed_when: mysql02.stdout != 'Variable_name\tValue\nwsrep_local_state\t4'      
+
+- name: Patching MariaDB server Host_E_DB
+  hosts: Host_E_DB
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache on Host_E_DB
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on Host_E_DB
+      apt: upgrade=dist force_apt_get=yes dpkg_options='force-confold,force-confdef'
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoremove: yes
+
+    - name: Reboot Host_E_DB if kernel updated
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+        
+    - name: Pause to let database connect back to cluster
+      pause:
+        minutes: 3
+        
+    - name: Check status of the mariadb service
+      systemd:
+        state: started
+        name: mariadb
+      register: mariadbp03
+      failed_when: mariadbp03.status.ActiveState != 'active'        
+
+    - name: Check Mysql
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_local_state'"
+      register: mysql03
+
+    - name: Print value
+      debug:
+        var: mysql03
+      failed_when: mysql03.stdout != 'Variable_name\tValue\nwsrep_local_state\t4'

@@ -1,0 +1,186 @@
+- hosts: Host_A
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Pause to let database connect back to cluster 
+      pause:
+        minutes: 3
+
+    - name: Check status of the mariadb service
+      systemd:
+        state: started
+        name: mariadb
+      register: galeraa01
+      failed_when: galeraa01.status.ActiveState != 'active' 
+	 
+    - name: Check Mysql
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_local_state'"
+      register: mysql01
+
+    - name: Print value
+      debug:
+        var: mysql01
+      failed_when: mysql01.stdout != 'Variable_name\tValue\nwsrep_local_state\t4'
+     
+- hosts: Host_B
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Pause to let database connect back to cluster 
+      pause:
+        minutes: 3
+
+    - name: Check status of the mariadb service
+      systemd:
+        state: started
+        name: mariadb
+      register: galeraa02
+      failed_when: galeraa02.status.ActiveState != 'active' 
+	 
+    - name: Check Mysql
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_local_state'"
+      register: mysql02
+
+    - name: Print value
+      debug:
+        var: mysql02
+      failed_when: mysql02.stdout != 'Variable_name\tValue\nwsrep_local_state\t4'
+	  
+- hosts: Host_C
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Pause to let database connect back to cluster 
+      pause:
+        minutes: 3
+
+    - name: Check status of the mariadb service
+      systemd:
+        state: started
+        name: mariadb
+      register: galeraa03
+      failed_when: galeraa03.status.ActiveState != 'active' 
+	 
+    - name: Check Mysql
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_local_state'"
+      register: mysql03
+
+    - name: Print value
+      debug:
+        var: mysql03
+      failed_when: mysql03.stdout != 'Variable_name\tValue\nwsrep_local_state\t4'
+	 
+- hosts: Host_D
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Pause to check if database has connected
+      pause:
+        minutes: 1
+        
+    - name: Start galera cluster
+      shell: galera_new_cluster
+      
+    - name: Pause to check if database has connected
+      pause:
+        minutes: 1      
+      
+    - name: Check status of the mariadb service
+      systemd:
+        state: started
+        name: mariadb
+      register: galerad01
+      failed_when: galerad01.status.ActiveState != 'active' 
+	 
+    - name: Check Mysql
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_local_state'"
+      register: mysql04
+
+    - name: Print value
+      debug:
+        var: mysql04
+      failed_when: mysql04.stdout != 'Variable_name\tValue\nwsrep_local_state\t4'

@@ -1,0 +1,438 @@
+- hosts: Host_A
+  become: true
+  become_user: root
+  tasks:
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+
+- hosts: Host_B
+  become: true
+  become_user: root
+  tasks:
+  
+    - name: Stop puppet service
+      systemd:
+        name: puppet
+        state: stopped
+  
+    - name: Check if .php file exists
+      stat: path=/var/www/html/check.php
+      register: check_stat_off_1
+
+    - name: Rename .php file
+      command: mv /var/www/html/check.php /var/www/html/check_off.php
+      when: check_stat_off_1.stat.exists
+
+    - name: Change ownership of the off.php file
+      file:
+        path: /var/www/html/check_off.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_off_1
+
+    - name: Print tail
+      debug:
+        var: result_off_1
+      failed_when: result_off_1.stdout != " 404 16 "
+
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Check if off.php file exists
+      stat: path=/var/www/html/check_off.php
+      register: check_stat_1
+
+    - name: Rename off.php file
+      command: mv /var/www/html/check_off.php /var/www/html/check.php
+      when: check_stat_1.stat.exists
+
+    - name: Change ownership of the .php file
+      file:
+        path: /var/www/html/check.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_1
+
+    - name: Print tail
+      debug:
+        var: result_1
+      failed_when: result_1.stdout != " 200 2 "
+        
+    - name: Start Puppet service
+      systemd:
+        name: puppet
+        state: started
+        
+     
+        
+- hosts: Host_C
+  become: true
+  become_user: root
+  tasks:
+  
+    - name: Stop puppet service
+      systemd:
+        name: puppet
+        state: stopped
+  
+    - name: Check if .php file exists
+      stat: path=/var/www/html/check.php
+      register: check_stat_off_2
+
+    - name: Rename .php file
+      command: mv /var/www/html/check.php /var/www/html/check_off.php
+      when: check_stat_off_2.stat.exists
+
+    - name: Change ownership of the off.php file
+      file:
+        path: /var/www/html/check_off.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_off_2
+
+    - name: Print tail
+      debug:
+        var: result_off_2
+      failed_when: result_off_2.stdout != " 404 16 "
+
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Check if off.php file exists
+      stat: path=/var/www/html/check_off.php
+      register: check_stat_2
+
+    - name: Rename off.php file
+      command: mv /var/www/html/check_off.php /var/www/html/check.php
+      when: check_stat_2.stat.exists
+
+    - name: Change ownership of the .php file
+      file:
+        path: /var/www/html/check.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_2
+
+    - name: Print tail
+      debug:
+        var: result_2
+      failed_when: result_2.stdout != " 200 2 "
+        
+    - name: Start Puppet service
+      systemd:
+        name: puppet
+        state: started
+        
+       
+        
+- hosts: Host_D
+  become: true
+  become_user: root
+  tasks:
+  
+    - name: Stop puppet service
+      systemd:
+        name: puppet
+        state: stopped
+  
+    - name: Check if .php file exists
+      stat: path=/var/www/html/check.php
+      register: check_stat_off_3
+
+    - name: Rename .php file
+      command: mv /var/www/html/check.php /var/www/html/check_off.php
+      when: check_stat_off_3.stat.exists
+
+    - name: Change ownership of the off.php file
+      file:
+        path: /var/www/html/check_off.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_off_3
+
+    - name: Print tail
+      debug:
+        var: result_off_3
+      failed_when: result_off_3.stdout != " 404 16 "
+
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Check if off.php file exists
+      stat: path=/var/www/html/check_off.php
+      register: check_stat_3
+
+    - name: Rename off.php file
+      command: mv /var/www/html/check_off.php /var/www/html/check.php
+      when: check_stat_3.stat.exists
+
+    - name: Change ownership of the .php file
+      file:
+        path: /var/www/html/check.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_3
+
+    - name: Print tail
+      debug:
+        var: result_3
+      failed_when: result_3.stdout != " 200 2 "
+        
+    - name: Start Puppet service
+      systemd:
+        name: puppet
+        state: started
+        
+     
+        
+- hosts: Host_E
+  become: true
+  become_user: root
+  tasks:
+  
+    - name: Stop puppet service
+      systemd:
+        name: puppet
+        state: stopped
+  
+    - name: Check if .php file exists
+      stat: path=/var/www/html/check.php
+      register: check_stat_off_4
+
+    - name: Rename .php file
+      command: mv /var/www/html/check.php /var/www/html/check_off.php
+      when: check_stat_off_4.stat.exists
+
+    - name: Change ownership of the off.php file
+      file:
+        path: /var/www/html/check_off.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_off_4
+
+    - name: Print tail
+      debug:
+        var: result_off_4
+      failed_when: result_off_4.stdout != " 404 16 "
+
+    - name: Update apt repo and cache
+      yum: update_cache=true
+
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove useless packages from the cache
+      yum:
+        autoremove: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+		
+    - name: Check if off.php file exists
+      stat: path=/var/www/html/check_off.php
+      register: check_stat_4
+
+    - name: Rename off.php file
+      command: mv /var/www/html/check_off.php /var/www/html/check.php
+      when: check_stat_4.stat.exists
+
+    - name: Change ownership of the .php file
+      file:
+        path: /var/www/html/check.php
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart PHP-FPM service
+      systemd:
+        name: php-fpm
+        state: restarted
+        
+    - name: Wait 1 minute before check of log file
+      pause:
+        minutes: 1
+        
+    - name: Tail last 1 lines of log file
+      shell: tail -n 1 /var/log/httpd/access_log | awk -F '"' '{print $3}'
+      register: result_4
+
+    - name: Print tail
+      debug: 
+        var: result_4
+      failed_when: result_4.stdout != " 200 2 "
+        
+    - name: Start Puppet service
+      systemd:
+        name: puppet
+        state: started
