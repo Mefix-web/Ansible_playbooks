@@ -1,0 +1,9 @@
+- name: Apply server deployment role
+  remote_user: user
+  become_user: root
+  become: yes
+  hosts: all
+  gather_facts: yes
+  roles:
+    - server_deployment
+

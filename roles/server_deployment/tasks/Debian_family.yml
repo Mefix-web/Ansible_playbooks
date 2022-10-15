@@ -1,0 +1,28 @@
+---
+# This playbook contains common plays that will be run on all nodes.
+
+- name: Update apt cache
+  apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+- name: Install Auditd
+  apt:
+    state: present
+    pkg:
+      - auditd             
+
+- name: Upgrade all packages
+  apt: upgrade=dist force_apt_get=yes dpkg_options='force-confold,force-confdef'
+
+- name: Remove dependencies that are no longer required
+  apt:
+    autoremove: yes
+
+- name: Reboot server
+  reboot:
+    msg: "Reboot initiated by Ansible for kernel updates"
+    connect_timeout: 5
+    reboot_timeout: 300
+    pre_reboot_delay: 0
+    post_reboot_delay: 60
+    test_command: uptime
+

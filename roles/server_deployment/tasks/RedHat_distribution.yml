@@ -1,0 +1,7 @@
+---
+- name: RedHat_distribution -  subscription
+  redhat_subscription:
+    state: present
+    username: user
+    password: password
+    autosubscribe: true

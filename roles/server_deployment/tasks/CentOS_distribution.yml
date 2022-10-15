@@ -1,0 +1,4 @@
+---
+- name: CentOS_distribution - dummy
+  debug:
+    msg: "CentOS_distribution - dummy"

@@ -1,0 +1,9 @@
+- name: Apply ntp role
+  remote_user: exp
+  become_user: root
+  become: yes
+  hosts: all
+  gather_facts: yes
+  roles:
+    - ntp
+

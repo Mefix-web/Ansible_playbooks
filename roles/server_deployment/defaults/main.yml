@@ -1,0 +1,18 @@
+---
+SHS_DC_LOCATION: "Name"
+ansible_ssh_user: User
+
+dns_nameservers_DC1:
+  - [IP_ADDRESS]
+  - [IP_ADDRESS]
+
+dns_nameservers_DC2:
+  - [IP_ADDRESS]
+  - [IP_ADDRESS]
+
+dns_nameservers: "{{dns_nameservers_DC1}}"
+dns_domain: "domain"
+dns_searchs: 
+   - "{{dns_domain}}"
+
+bashrc_file: "/etc/bashrc"

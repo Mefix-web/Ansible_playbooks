@@ -1,0 +1,107 @@
+---
+#####################
+### Copy syslog-ng ##
+#####################
+
+- name: Copy file Ubuntu Trusty version 14
+  copy:
+    src: /home/user/syslog-ng/syslog-ng-premium-edition_7.0.25_UbuntuTrusty.deb
+    dest: /home/user/
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "14"
+
+- name: Copy file Ubuntu Xenial version 16
+  copy:
+    src: /home/user/syslog-ng/syslog-ng-premium-edition_7.0.25_UbuntuXenial.deb
+    dest: /home/user/
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "16"
+
+- name: Copy file Ubuntu Bionic version 18
+  copy:
+    src: /home/user/syslog-ng/syslog-ng-premium-edition_7.0.25_UbuntuBionic.deb
+    dest: /home/user/
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "18"
+
+- name: Copy file Ubuntu Focal version 20
+  copy:
+    src: /home/user/syslog-ng/syslog-ng-premium-edition_7.0.25_UbuntuFocal.deb
+    dest: /home/user/
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "20"
+
+#######################
+## Install syslog-ng ##
+#######################
+
+- name: Install Syslog-ng Ubuntu Trusty version 14
+  apt:
+    deb: /home/user/syslog-ng-premium-edition_7.0.25_UbuntuTrusty.deb
+    force: yes
+    dpkg_options: 'force-confdef,force-confold'
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "14"
+
+- name: Install Syslog-ng Ubuntu Xenial version 16
+  apt:
+    deb: /home/user/syslog-ng-premium-edition_7.0.25_UbuntuXenial.deb
+    force: yes
+    dpkg_options: 'force-confdef,force-confold'
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "16"
+
+- name: Install Syslog-ng Ubuntu Bionic version 18
+  apt:
+    deb: /home/user/syslog-ng-premium-edition_7.0.25_UbuntuBionic.deb
+    force: yes
+    dpkg_options: 'force-confdef,force-confold'
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "18"
+
+- name: Install Syslog-ng Ubuntu Focal version 20
+  apt:
+    deb: /home/user/syslog-ng-premium-edition_7.0.25_UbuntuFocal.deb
+    force: yes
+    dpkg_options: 'force-confdef,force-confold'
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "20"
+
+- name: Install Syslog-ng Ubuntu Jammy version 22
+  apt:
+    name: syslog-ng
+    state: present
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "22"
+
+- name: Copy file Syslog-ng.conf for Ubuntu <22
+  copy:
+    src: /home/user/syslog-ng/ubuntu20_syslog-ng.conf
+    dest: /opt/syslog-ng/etc/syslog-ng.conf
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version < "22"
+
+
+- name: Copy file Syslog-ng.conf for Ubuntu 22
+  copy:
+    src: /home/user/syslog-ng/ubuntu22_syslog-ng.conf
+    dest: /etc/syslog-ng/syslog-ng.conf
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "22"
+
+- name: Restart service
+  systemd:
+    name: syslog-ng.service
+    state: restarted
+
+- name: Move AgentDeployment script
+  copy:
+    src: /home/user/AgentDeploymentScript_ssl.sh
+    dest: /home/user
+    mode: 0777
+
+- name: Execute the script
+  script: /home/user/AgentDeploymentScript_ssl.sh
+
+- name: Delete installers
+  file:
+    path: /home/user/{{ files }}
+    state: absent
+  with_items:
+    - AgentDeploymentScript_ssl.sh
+    - syslog-ng-premium-edition-7.0.25-1.rhel7.x86_64.rpm
+    - syslog-ng-premium-edition_7.0.25_UbuntuTrusty.deb
+    - syslog-ng-premium-edition_7.0.25_UbuntuXenial.deb
+    - syslog-ng-premium-edition_7.0.25_UbuntuBionic.deb
+    - syslog-ng-premium-edition_7.0.25_UbuntuFocal.deb
+  loop_control:
+    loop_var: files

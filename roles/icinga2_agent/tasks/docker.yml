@@ -1,0 +1,58 @@
+---
+- name: Install packages.
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python34
+    - python34-pip
+# for RH8   - python38
+# for RH8    - python38-pip
+  when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and SHS_DOCKER_HOST is defined
+
+- name: Install packages.
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python34
+    - python34-pip
+  when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu") and SHS_DOCKER_HOST is defined
+
+- name: Install docker module.
+  pip:
+    name: docker
+    state: present
+    executable: pip3
+  when: SHS_DOCKER_HOST is defined
+
+- name: Copy docker script
+  copy:
+    src: files/docker_check.py
+    dest: /usr/libexec/icinga2/
+    group: icinga
+    owner: root
+    mode: 0755
+  when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and SHS_DOCKER_HOST is defined
+
+- name: Copy docker script
+  copy:
+    src: files/docker_check.py
+    dest: /usr/libexec/icinga2/
+    group: nagios
+    owner: nagios
+    mode: 0755
+  when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu") and SHS_DOCKER_HOST is defined
+
+- name: Add nagios user to docker group
+  user:
+    name: nagios
+    groups: docker
+  when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu") and SHS_DOCKER_HOST is defined
+
+- name: Add icinga user to docker group
+  user:
+    name: icinga
+    groups: docker
+  when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and SHS_DOCKER_HOST is defined
+

@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+# Must be on top of file
+tinker panic 0
+
+driftfile {{ ntp_config_driftfile }}
+
+{% if ntp__servers is defined and ntp__servers %}
+# NTP servers to synchronize with
+{% if ntp__servers is string %}
+server {{ ntp__servers }}
+{% else %}
+{% for address in ntp__servers %}
+server {{ address }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+
+restrict 127.0.0.1 
+restrict -6 ::1

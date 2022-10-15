@@ -1,0 +1,14 @@
+---
+- name: Apply Icinga2 agent deployement role.
+  remote_user: user
+  become: yes
+  become_method: sudo
+  become_user: root
+  hosts: all
+  gather_facts: yes
+  roles:
+    - icinga2_agent
+  environment:
+    http_proxy: http://proxy
+    https_proxy: http://proxy
+    FTP_PROXY: http://proxy

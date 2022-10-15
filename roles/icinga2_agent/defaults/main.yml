@@ -1,0 +1,25 @@
+---
+
+zone1:
+  name: satellite1
+  dc: DC1
+zone2:
+  name: satellite2
+  dc: DC2
+
+ic2_s01:
+  name: SERVER_NAME
+  ip: IP ADDRESS
+ic2_s02:
+  name: SERVER_NAME
+  ip: IP ADDRESS
+ic2_s03:
+  name: SERVER_NAME
+  ip: IP ADDRESS
+ic2_s04:
+  name: SERVER_NAME
+  ip: IP ADDRESS
+
+icinga2_ca_host: MASTER_SERVER_NAME
+
+copy_custom_scripts: no

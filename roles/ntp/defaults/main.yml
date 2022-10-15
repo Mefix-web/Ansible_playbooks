@@ -1,0 +1,22 @@
+---
+ntp_pkg_state: 'present'
+ntp_service_state: 'started'
+ntp_service_enabled: 'yes'
+
+# YAML dictionary with different NTP server lists depending on datacenter location
+ntp__servers_map:
+   'DC1':  [ 'IP ADDRESS # NTP_server1',
+  			 'IP ADDRESS # NTP_server2' ]
+
+
+   'DC2':  [ 'IP ADDRESS  # NTP_server3',
+  		     'IP ADDRESS  # NTP_server4' ]
+
+
+   'default': [ 'IP ADDRESS  # NTP_server1',
+  			 'IP ADDRESS  # NTP_server2' ]
+
+
+
+ntp__servers: '{{ ntp__servers_map[SHS_DC_LOCATION] | default(ntp__servers_map["default"]) }}'
+

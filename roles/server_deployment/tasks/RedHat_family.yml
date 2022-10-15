@@ -1,0 +1,46 @@
+---
+# This playbook contains common plays that will be run on all nodes.
+   
+
+- name: RedHat_family - Check if EPEL repo is already configured.
+  stat: path=/etc/yum.repos.d/epel.repo
+  register: epel_repofile_result
+
+- name: RedHat_family - Install EPEL repo file
+  yum:
+    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+    state: present
+  register: result
+  #until: 'result.rc == 0'
+  retries: 5
+  delay: 10
+  when: not epel_repofile_result.stat.exists
+  environment:
+   http_proxy: http://proxy
+   https_proxy: http://proxy
+
+- debug:
+    var: result.rc
+    verbosity: 4
+
+
+
+####################
+# disable services #
+####################
+- name: RedHat_family - Disable firewalld
+  service:
+    name=firewalld
+    state=stopped
+    enabled=no
+  ignore_errors: yes
+  tags: firewalld
+
+- name: RedHat_family - Disable wpa_supplicant
+  service:
+    name=wpa_supplicant
+    state=stopped
+    enabled=no
+  ignore_errors: yes
+  tags: wpa_supplicant
+

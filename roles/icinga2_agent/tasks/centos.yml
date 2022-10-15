@@ -1,0 +1,205 @@
+---
+- name: Add Icinga2 repo (RHEL6)
+  yum:
+    name: https://packages.icinga.com/epel/icinga-rpm-release-6-latest.noarch.rpm
+    state: present
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "6"
+  ignore_errors: yes
+
+- name: Add Icinga2 repo (CentOS & RHEL7)
+  yum:
+    name: https://packages.icinga.com/epel/icinga-rpm-release-7-latest.noarch.rpm
+    state: present
+  when: ansible_distribution == "CentOS" or (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
+  ignore_errors: yes
+
+- name: Add Icinga2 repo (CentOS & RHEL8)
+  yum:
+    name: https://packages.icinga.com/epel/icinga-rpm-release-8-latest.noarch.rpm
+    state: present
+  when: ansible_distribution == "CentOS" or (ansible_distribution == "RedHat" and ansible_distribution_major_version == "8")
+  ignore_errors: yes
+
+- name: Add epel repo (CentOS)
+  yum:
+    name: epel-release
+    state: present
+  when: ansible_distribution == "CentOS"
+  ignore_errors: yes
+
+- name: Add epel repo (RHEL6)
+  yum:
+    name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+    state: present
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "6"
+  ignore_errors: yes
+
+- name: Add epel repo (RHEL7)
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "7"
+  ignore_errors: yes
+
+- name: Add epel repo (RHEL8)
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    state: present
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  ignore_errors: yes
+
+- name: Add epel testing repo (RHEL8)
+  ini_file:
+    dest: /etc/yum.repos.d/epel-testing.repo
+    section: epel-testing
+    option: enabled
+    value: 1
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  ignore_errors: yes
+
+- name: Add codeready repo (RHEL8)
+  ini_file:
+    dest: /etc/yum.repos.d/redhat.repo
+    section: codeready-builder-for-rhel-8-x86_64-rpms
+    option: enabled
+    value: 1
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  ignore_errors: yes
+
+- name: Add PowerTools repo (CentOS8)
+  ini_file:
+    dest: /etc/yum.repos.d/CentOS-PowerTools.repo
+    section: PowerTools
+    option: enabled
+    value: 1
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
+  ignore_errors: yes
+
+- name: Install packages
+  yum:
+    name: ['@Development tools', 'icinga2', 'nagios-plugins-all', 'perl-core', 'perl-devel', 'perl-CPAN', 'net-snmp', 'net-snmp-utils', 'rsync', 'git', 'curl', 'perl-DBD-MySQL']
+    state: present
+    skip_broken: yes
+  ignore_errors: yes
+
+- name: Remove epel testing repo (RHEL8)
+  ini_file:
+    dest: /etc/yum.repos.d/epel-testing.repo
+    section: epel-testing
+    option: enabled
+    value: 0
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  ignore_errors: yes
+
+- name: Remove codeready repo (RHEL8)
+  ini_file:
+    dest: /etc/yum.repos.d/redhat.repo
+    section: codeready-builder-for-rhel-8-x86_64-rpms
+    option: enabled
+    value: 0
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: Remove PowerTools repo (CentOS8)
+  ini_file:
+    dest: /etc/yum.repos.d/CentOS-PowerTools.repo
+    section: PowerTools
+    option: enabled
+    value: 0
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
+  ignore_errors: yes
+
+- name: Copy cpanminus.pl
+  copy:
+    src: files/cpanminus.pl
+    dest: /tmp/
+    group: exp
+    owner: exp
+    mode: 0440
+
+- name: Install cpanm
+  shell: cat /tmp/cpanminus.pl | perl - App::cpanminus
+  args:
+    creates: /usr/bin/cpanm
+
+- name: Make link for cpanm
+  file:
+    path: /usr/local/sbin/cpanm
+    src: /usr/local/bin/cpanm
+    state: link
+  ignore_errors: yes
+
+- name: Install Perl Modules.
+  cpanm:
+    name: "{{ item }}"
+  with_items:
+    - Monitoring::Plugin
+    - Net::SNMP
+    - Crypt::DES
+    - Digest::SHA1
+    - Digest::HMAC
+
+- name: Ensure icinga group is created.
+  group:
+    name: icinga
+
+- name: Create plugin dir
+  file:
+    path: /usr/libexec/icinga2
+    state: directory
+    group: icinga
+    owner: root
+    mode: 0755
+
+- name: Move all plugins to new dir (CentOS 6)
+  synchronize:
+    src: /usr/lib/nagios/plugins/
+    dest: /usr/libexec/icinga2
+  delegate_to: "{{ inventory_hostname }}"
+  when: ansible_distribution == "CentOS" and ansible_distribution_version == "6.2"
+  ignore_errors: yes
+
+#- name: Move all plugins to new dir
+#  synchronize:
+#    src: /usr/lib64/nagios/plugins/
+#    dest: /usr/libexec/icinga2
+#  delegate_to: "{{ inventory_hostname }}"
+#  when: (ansible_distribution == "CentOS" and ansible_distribution_version != "6.2") or ansible_distribution == "RedHat"
+#  ignore_errors: yes
+
+- name: Move all plugins to new dir
+  shell: cp -rp /usr/lib64/nagios/plugins/* /usr/libexec/icinga2/
+  when: (ansible_distribution == "CentOS" and ansible_distribution_version != "6.2") or ansible_distribution == "RedHat"
+  ignore_errors: yes
+
+- name: Copy Manubulon-snmp plugins
+  copy:
+    src: files/manubulon-snmp/
+    dest: /usr/libexec/icinga2/
+    group: icinga
+    owner: root
+    mode: 0755
+    force: no
+
+- name: Include Custom Scripts task
+  include_tasks: "custom_scripts.yml"
+
+- name: Include docker task
+  include_tasks: "docker.yml"
+  when: SHS_DOCKER_HOST is defined
+
+- name: Run SNMP setup
+  include_tasks: "snmpd.yml"
+
+- name: Run daemon setup
+  include_tasks: "daemon.yml"
+
+- name: Ensure pki folder is created
+  file:
+    path: /var/lib/icinga2/certs
+    state: directory
+    mode: 0770
+    owner: icinga
+    group: icinga
+
+- name: Run Agent setup
+  include_tasks: "agent.yml"

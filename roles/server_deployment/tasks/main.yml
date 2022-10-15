@@ -1,0 +1,81 @@
+---
+- name: Debug family variables
+  debug:
+    msg: "ansible_distribution: {{ ansible_distribution }} ; ansible_os_family: {{ ansible_os_family }} ; "
+
+- name: Gather OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+      - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+      - "{{ ansible_distribution }}.yml"
+      skip: true
+
+- name: "Include ansible_os_family specific tasks"
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+      - "{{ ansible_os_family }}_family.yml"
+      skip: true
+
+
+# First include the distribution
+- name: "Include ansible_distribution specific tasks"
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+      - "{{ ansible_distribution }}_distribution.yml"
+
+
+##########
+## motd ##
+##########
+- name: Generate figlet on ansible hostname
+  local_action: shell figlet -w 110 {{ansible_hostname}}
+  register: figlet
+  tags: motd
+
+- name: Install generated motd
+  template: src=motd.j2 dest=/etc/motd
+  tags: motd 
+
+
+#######################
+## issue & issue.net ##
+#######################
+- name: Install issue file
+  template: src=issue.j2 dest=/etc/issue
+  tags: issue 
+
+- name: Install issue.net file
+  template: src=issue.net.j2 dest=/etc/issue.net
+  tags: issue 
+
+- name : Set Banner /etc/issue.net in sshd_config
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '.*Banner .*'
+    line: 'Banner /etc/issue.net'
+    insertbefore: BOF
+    state: present
+    backup: yes
+  notify: restart sshd
+  tags: issue
+
+#####################
+## Edit /etc/hosts ##
+#####################
+
+- name: Register hostname
+  shell: hostname
+  register: hostname
+
+- name: Insert FQDN
+  lineinfile:
+    path: /etc/hosts
+    insertbefore: '127.0.0.1 localhost'
+    line: "{{item.line}}"
+    state: present
+  with_items:
+    - { line: '127.0.0.1 {{ hostname.stdout}}.[something] {{ hostname.stdout }}'}
+

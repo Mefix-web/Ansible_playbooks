@@ -1,0 +1,117 @@
+---
+- name: Install GNUPG
+  apt:
+    name: gnupg
+    state: present
+
+- name: Copy Icinga2 key.
+  copy:
+    src: files/icinga.key
+    dest: /tmp/
+
+- name: Add Icinga2 repo key
+  apt_key:
+    file: /tmp/icinga.key
+    state: present
+
+- name: Add Icinga2 repo
+  apt_repository:
+    repo: "deb http://packages.icinga.com/{{ ansible_distribution|lower }} icinga-{{ ansible_distribution_release }} main"
+    state: present
+    update_cache: yes
+
+- name: Install packages
+  apt:
+    name: [ 'build-essential', 'icinga2', 'monitoring-plugins', 'perl-modules', 'libperl-dev', 'snmp', 'libsnmp-base', 'libnet-snmp-perl', 'libsnmp-dev', 'libsnmp-perl', 'rsync', 'git', 'curl', 'python3', 'libdbd-mysql-perl' ]
+    state: present
+  ignore_errors: yes
+
+- name: Copy cpanminus.pl
+  copy:
+    src: files/cpanminus.pl
+    dest: /tmp/
+    group: user
+    owner: user
+    mode: 0440
+
+- name: Install cpanm
+  shell: cat /tmp/cpanminus.pl | perl - App::cpanminus
+  args:
+    creates: /usr/bin/cpanm
+
+- name: Install Perl Modules
+  cpanm:
+    name: "{{ item }}"
+  with_items:
+    - Monitoring::Plugin
+    - Net::SNMP
+    - Crypt::DES
+    - Digest::SHA1
+    - Digest::HMAC
+
+- name: Create plugin dir
+  file:
+    path: /usr/libexec/icinga2
+    state: directory
+    group: nagios
+    owner: nagios
+    mode: 0755
+
+#- name: Move all plugins to new dir
+#  synchronize:
+#    src: /usr/lib64/nagios/plugins/
+#    dest: /usr/libexec/icinga2
+#  delegate_to: "{{ inventory_hostname }}"
+
+- name: Move all plugins to new dir
+  copy:
+    src: /usr/lib64/nagios/plugins/
+    dest: /usr/libexec/icinga2/
+    group: root
+    owner: root
+    mode: 0755
+    force: no
+
+- name: Move remotely plugins to new dir
+#  shell: mv /usr/lib/nagios/plugins/* /usr/libexec/icinga2/
+  copy:
+    src: /usr/lib/nagios/plugins/
+    dest: /usr/libexec/icinga2/
+    remote_src: yes
+    group: root
+    owner: root
+    mode: 0755
+    force: no
+
+- name: Copy Manubulon-snmp plugins
+  copy:
+    src: files/manubulon-snmp/
+    dest: /usr/libexec/icinga2/
+    group: nagios
+    owner: nagios
+    mode: 0755
+    force: no
+
+- name: Include Custom Scripts task
+  include_tasks: "custom_scripts.yml"
+
+- name: Include docker task
+  include_tasks: "docker.yml"
+  when: SHS_DOCKER_HOST is defined
+
+- name: Run SNMP setup
+  include_tasks: "snmpd.yml"
+
+- name: Run daemon setup
+  include_tasks: "daemon.yml"
+
+- name: Ensure pki folder is created
+  file:
+    path: /var/lib/icinga2/certs
+    state: directory
+    mode: 0770
+    owner: nagios
+    group: nagios
+
+- name: Run Agent setup
+  include_tasks: "agent.yml"

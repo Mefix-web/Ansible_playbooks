@@ -1,0 +1,92 @@
+---
+- name: Create Cert
+  shell: |
+    /usr/sbin/icinga2 pki new-cert \
+    --cn {{ ansible_fqdn }} \
+    --key '/var/lib/icinga2/certs/{{ ansible_fqdn }}.key' \
+    --cert '/var/lib/icinga2/certs/{{ ansible_fqdn }}.crt'
+  args:
+    creates: "/var/lib/icinga2/certs/{{ ansible_fqdn }}.crt"
+
+- name: Generate ticket on master and save it as var
+  shell: "/usr/sbin/icinga2 pki ticket --cn {{ ansible_fqdn }}"
+  register: icinga2_client_ticket
+  changed_when: False
+  delegate_to: "{{ icinga2_ca_host }}"
+
+- name: Save masters cert as trustedcert
+  shell: |
+    /usr/sbin/icinga2 pki save-cert \
+    --key '/var/lib/icinga2/certs/{{ ansible_fqdn }}.key' \
+    --cert '/var/lib/icinga2/certs/{{ ansible_fqdn }}.crt' \
+    --trustedcert /var/lib/icinga2/certs/trustedcert.crt \
+    --host {{ icinga2_ca_host }}
+  args:
+    creates: /var/lib/icinga2/certs/trustedcert.crt
+
+- name: Request the cert from the Icinga master.
+  shell: |
+    /usr/sbin/icinga2 pki request \
+    --port PORT \
+    --host {{ icinga2_ca_host }} \
+    --ticket {{ icinga2_client_ticket['stdout'] }} \
+    --key '/var/lib/icinga2/certs/{{ ansible_fqdn }}.key' \
+    --cert '/var/lib/icinga2/certs/{{ ansible_fqdn }}.crt' \
+    --trustedcert /var/lib/icinga2/certs/trustedcert.crt \
+    --ca /var/lib/icinga2/certs/ca.crt
+  args:
+    creates: '/var/lib/icinga2/certs/ca.crt'
+
+#    --master_host {{ icinga2_ca_host }} \
+- name: Node setup DC1
+  shell: |
+    /usr/sbin/icinga2 node setup \
+    --ticket {{ icinga2_client_ticket['stdout'] }} \
+    --zone {{ ansible_fqdn }} \
+    --trustedcert /var/lib/icinga2/certs/trustedcert.crt \
+    --cn {{ ansible_fqdn }} \
+    --accept-commands \
+    --accept-config \
+    --parent_host {{ icinga2_ca_host }} \
+    --endpoint {{ ic2_s01['name'] }} \
+    --endpoint {{ ic2_s02['name'] }}
+  args:
+    creates: /etc/icinga2/zones.conf.orig
+  when: SHS_DC_LOCATION == "DC1"
+
+- name: Node setup DC2
+  shell: |
+    /usr/sbin/icinga2 node setup \
+    --ticket {{ icinga2_client_ticket['stdout'] }} \
+    --zone {{ ansible_fqdn }} \
+    --trustedcert /var/lib/icinga2/certs/trustedcert.crt \
+    --cn {{ ansible_fqdn }} \
+    --accept-commands \
+    --accept-config \
+    --master_host {{ icinga2_ca_host }} \
+    --endpoint {{ ic2_s03['name'] }} \
+    --endpoint {{ ic2_s04['name'] }}
+  args:
+    creates: /etc/icinga2/zones.conf.orig
+  when: SHS_DC_LOCATION == "DC2"
+
+- name: Add constants.conf file
+  template:
+    src: constants.conf.j2
+    dest: /etc/icinga2/constants.conf
+
+- name: Add icinga2.conf file
+  template:
+    src: icinga2.conf.j2
+    dest: /etc/icinga2/icinga2.conf
+
+- name: Add zones.conf file
+  template:
+    src: zones.conf.j2
+    dest: /etc/icinga2/zones.conf
+
+- name: restart daemon
+  service:
+    name: icinga2
+    state: restarted
+    enabled: yes

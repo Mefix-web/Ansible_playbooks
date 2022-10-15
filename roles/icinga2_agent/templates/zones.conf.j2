@@ -1,0 +1,50 @@
+# {{ ansible_managed }}
+{% if SHS_DC_LOCATION == zone1["dc"] -%}
+object Endpoint "{{ ic2_s01["name"] }}" {
+  host  = "{{ ic2_s01["ip"] }}"
+  port  = "PORT"
+}
+
+object Endpoint "{{ ic2_s02["name"] }}" {
+  host  = "{{ ic2_s02["ip"] }}"
+  port  = "PORT"
+}
+
+object Zone "{{ zone1["name"] }}" {
+  endpoints = [ "{{ ic2_s01["name"] }}", "{{ ic2_s02["name"] }}" ]
+}
+
+object Endpoint NodeName {
+}
+
+object Zone ZoneName {
+  endpoints = [ NodeName ]
+  parent    = "{{ zone1["name"] }}"
+}
+{% elif SHS_DC_LOCATION == zone2["dc"] -%}
+object Endpoint "{{ ic2_s03["name"] }}" {
+  host  = "{{ ic2_s03["ip"] }}"
+  port  = "PORT"
+}
+
+object Endpoint "{{ ic2_s04["name"] }}" {
+  host  = "{{ ic2_s04["ip"] }}"
+  port  = "PORT"
+}
+
+object Zone "{{ zone2["name"] }}" {
+  endpoints = [ "{{ ic2_s03["name"] }}", "{{ ic2_s04["name"] }}" ]
+}
+
+object Endpoint NodeName {
+}
+
+object Zone ZoneName {
+  endpoints = [ NodeName ]
+  parent    = "{{ zone2["name"] }}"
+}
+{%- endif %}
+
+object Zone "global" {
+  global  = true
+}

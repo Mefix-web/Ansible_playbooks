@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+const PluginDir = "/usr/libexec/icinga2"
+const ManubulonPluginDir = "/usr/libexec/icinga2"
+const PluginContribDir = "/usr/libexec/icinga2"
+const NodeName = "{{ ansible_fqdn }}"
+const ZoneName = NodeName
+const TicketSalt = "{{ icinga2_client_ticket['stdout'] }}"

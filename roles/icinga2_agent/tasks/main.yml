@@ -1,0 +1,27 @@
+---
+
+- name: Debug family variables
+  debug:
+    msg: "ansible_distribution: {{ ansible_distribution }}"
+
+- name: Look if /etc/icinga2 exists.
+  stat:
+    path: /etc/icinga2
+  register: agent_dir
+
+- name: Check if Icinga2 is running.
+  shell: pgrep icinga2
+  register: pgrep_icinga2
+  ignore_errors: true
+  failed_when: false
+  changed_when: false
+
+- block:
+  - name: Run agent setup
+    include: "{{ ansible_distribution|lower }}.yml"
+  when: agent_dir.stat.exists == False or pgrep_icinga2.stdout_lines|length < 1
+
+- block:
+  - name: Run Custom Scripts task when copyscripts tag is set
+    include_tasks: "custom_scripts.yml"
+  when: copy_custom_scripts == "yes"

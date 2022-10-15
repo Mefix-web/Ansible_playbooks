@@ -1,0 +1,16 @@
+---
+# This playbook deploys the common configuration,
+- name: Apply common role.
+  remote_user: user
+  become_user: root
+  become: yes
+  hosts: all
+  gather_facts: yes
+  roles:
+    - common
+    - ntp
+    - icinga2_agent
+  environment:
+    http_proxy: http://proxy
+    https_proxy: http://proxy
+    FTP_PROXY: http://proxy

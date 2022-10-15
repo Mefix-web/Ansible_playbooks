@@ -1,0 +1,1 @@
+In this directory there should be scripts for checks written in PERL(NOT BY ME), icinga.key, manubulon-snmp scripts and check_service scripts but due to security they will not be shown on github.

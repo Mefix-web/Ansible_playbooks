@@ -1,0 +1,21 @@
+---
+# Handler to handle common notifications. Handlers are called by other plays.
+# See http://docs.ansible.com/playbooks_intro.html for more information about handlers.
+
+- name: restart ntp
+  service: name=ntpd state=restarted
+
+- name: restart sshd
+  service: name=sshd state=restarted
+
+- name: restart hostname
+  service: 
+    name: hostname
+    state: restarted
+  when: ansible_os_family != 'RedHat' and ansible_service_mgr != 'systemd'
+
+- name: restart systemd-logind
+  service:
+    name: systemd-logind
+    state: restarted
+  when: ansible_os_family != 'RedHat' and ansible_service_mgr == 'systemd'
